@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import JobList from '@/components/jobs/JobList'
 import SalaryPrediction from '@/components/jobs/SalaryPrediction'
-import { jobsApi } from '@/services/api'
+import { jobsApi } from '@/services/apiService'
 import type { Job, SalaryPrediction as SalaryPredictionType } from '@/services/types'
 import { toast } from 'react-toastify'
 

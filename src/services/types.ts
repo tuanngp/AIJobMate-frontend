@@ -1,10 +1,3 @@
-// API Response Types
-export interface ApiResponse<T> {
-  data: T
-  status: number
-  message: string
-}
-
 // Career Types
 export interface CareerAdvice {
   suggestions: string[]

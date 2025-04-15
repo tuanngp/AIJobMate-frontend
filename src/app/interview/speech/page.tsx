@@ -4,7 +4,7 @@ import { useState } from 'react'
 import AudioRecorder from '@/components/interview/AudioRecorder'
 import SpeechAnalysisCard from '@/components/interview/SpeechAnalysisCard'
 import { toast } from 'react-toastify'
-import { interviewApi } from '@/services/api'
+import { interviewApi } from '@/services/apiService'
 import type { SpeechAnalysis } from '@/services/types'
 
 const sampleQuestions = [

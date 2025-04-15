@@ -6,7 +6,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const navigation = [
-  { name: "Career Advisor", href: "/career" },
+  { name: "Career Advisor", href: "/career/analyze" },
   { name: "Interview Practice", href: "/interview/speech" },
   { name: "Video Coach", href: "/interview/video" },
   { name: "Job Matching", href: "/jobs" },
