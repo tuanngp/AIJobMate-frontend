@@ -1,13 +1,13 @@
 'use client';
 
 import React, { useState } from 'react';
+import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import CVUpload from '@/components/career/CVUpload';
 import AnalysisProgress from '@/components/career/AnalysisProgress';
 import AnalysisResults from '@/components/career/AnalysisResults';
 import { CVAnalysisData } from '@/services/cv/types';
 import { toast } from 'react-toastify';
 import { CvService } from '@/services/cv/cvService';
-
 
 enum AnalysisState {
   UPLOAD,
@@ -22,6 +22,7 @@ const CVAnalyzePage = () => {
   const [analysisData, setAnalysisData] = useState<CVAnalysisData | null>(null);
   const [errorMessage, setErrorMessage] = useState<string>("");
   const cvService = CvService();
+
   const handleFileUpload = async (file: File) => {
     try {
       setAnalysisState(AnalysisState.UPLOADING);
@@ -39,19 +40,19 @@ const CVAnalyzePage = () => {
       setAnalysisState(AnalysisState.ANALYZING);
       
       // 3. Trigger CV analysis
-      const analysisResponse = await cvService.analyzeCV(cvInfo.id);
+      // const analysisResponse = await cvService.analyzeCV(cvInfo.id);
       
-      if (analysisResponse.errors) {
-        throw new Error(analysisResponse.errors);
-      }
+      // if (analysisResponse.errors) {
+      //   throw new Error(analysisResponse.errors);
+      // }
       
-      // 4. If analysis is in processing state, start polling
-      if (analysisResponse.data.status === "processing") {
-        pollAnalysisStatus(cvInfo.id);
-      } else {
-        setAnalysisData(analysisResponse.data);
-        setAnalysisState(AnalysisState.COMPLETE);
-      }
+      // // 4. If analysis is in processing state, start polling
+      // if (analysisResponse.data.status === "processing") {
+      //   pollAnalysisStatus(cvInfo.id);
+      // } else {
+      //   setAnalysisData(analysisResponse.data);
+      //   setAnalysisState(AnalysisState.COMPLETE);
+      // }
     } catch (error: any) {
       console.error("Error during CV upload and analysis:", error);
       setErrorMessage(error.message || "Có lỗi xảy ra khi xử lý CV");
@@ -86,7 +87,7 @@ const CVAnalyzePage = () => {
     setErrorMessage("");
   };
 
-  return (
+  const content = (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-8">
@@ -142,6 +143,8 @@ const CVAnalyzePage = () => {
       </div>
     </div>
   );
+
+  return <ProtectedRoute>{content}</ProtectedRoute>;
 };
 
 export default CVAnalyzePage;

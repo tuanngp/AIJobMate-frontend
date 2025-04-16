@@ -1,6 +1,5 @@
 import { useApi } from "@/hooks/useApi";
-import { get } from "http";
-import { USER } from "./api";
+import { USER } from "../api";
 
 const api = useApi();
 

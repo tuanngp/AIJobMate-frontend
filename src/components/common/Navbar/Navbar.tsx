@@ -4,6 +4,7 @@ import { Disclosure } from "@headlessui/react";
 import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useAuth } from '@/contexts/AuthContext';
 
 const navigation = [
   { name: "Career Advisor", href: "/career/analyze" },
@@ -14,6 +15,7 @@ const navigation = [
 
 export default function Navbar() {
   const pathname = usePathname();
+  const { user, logout } = useAuth();
 
   return (
     <Disclosure as="nav" className="bg-indigo-600">
@@ -44,6 +46,34 @@ export default function Navbar() {
                     ))}
                   </div>
                 </div>
+              </div>
+              <div className="hidden md:block">
+                {user ? (
+                  <div className="flex items-center space-x-4">
+                    <span className="text-white text-sm">Xin chào, {user.username}</span>
+                    <button
+                      onClick={logout}
+                      className="text-white hover:text-red-200 text-sm font-medium"
+                    >
+                      Đăng xuất
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-x-4">
+                    <Link
+                      href="/login"
+                      className="text-white hover:text-gray-200 text-sm font-medium"
+                    >
+                      Login
+                    </Link>
+                    <Link
+                      href="/register"
+                      className="bg-white text-indigo-600 hover:bg-gray-100 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200"
+                    >
+                      Register
+                    </Link>
+                  </div>
+                )}
               </div>
               <div className="-mr-2 flex md:hidden">
                 <Disclosure.Button className="relative inline-flex items-center justify-center rounded-md bg-indigo-600 p-2 text-white hover:bg-indigo-500 focus:outline-none">

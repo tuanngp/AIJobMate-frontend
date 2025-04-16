@@ -1,5 +1,3 @@
-const API_PREFIX = process.env.API_PREFIX || "/api/v1";
-
 export const AUTH = {
     REGISTER: `/auth/register`,
     LOGIN: `/auth/login`,
