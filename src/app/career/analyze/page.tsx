@@ -1,12 +1,13 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import ExportCV from '@/components/career/ExportCV';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import CVUpload from '@/components/career/CVUpload';
 import AnalysisProgress from '@/components/career/AnalysisProgress';
 import AnalysisResults from '@/components/career/AnalysisResults';
 import CVHistory from '@/components/career/CVHistory';
-import { CVAnalysisData } from '@/services/cv/types';
+import { CVAnalysisData } from './types';
 import { toast } from 'react-toastify';
 import { CvService } from '@/services/cv/cvService';
 
@@ -181,6 +182,9 @@ const CVAnalyzePage = () => {
 
             {analysisState === AnalysisState.COMPLETE && analysisData && (
               <div className="mt-8 transition-all duration-500 animate-fadeIn">
+                <div className="mb-4">
+                  <ExportCV data={analysisData} />
+                </div>
                 <AnalysisResults data={analysisData} />
               </div>
             )}
