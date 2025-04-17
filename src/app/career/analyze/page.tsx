@@ -7,9 +7,10 @@ import CVUpload from '@/components/career/CVUpload';
 import AnalysisProgress from '@/components/career/AnalysisProgress';
 import AnalysisResults from '@/components/career/AnalysisResults';
 import CVHistory from '@/components/career/CVHistory';
-import { CVAnalysisData } from './types';
 import { toast } from 'react-toastify';
 import { CvService } from '@/services/cv/cvService';
+import { CVAnalysisData } from '@/services/cv/types';
+import { ApiError } from 'next/dist/server/api-utils';
 
 enum AnalysisState {
   UPLOAD,
@@ -38,9 +39,10 @@ const CVAnalyzePage = () => {
         setAnalysisData(response.data);
         setAnalysisState(AnalysisState.COMPLETE);
       }
-    } catch (error: any) {
-      console.error("Error loading CV analysis:", error);
-      setErrorMessage(error.message || "Có lỗi xảy ra khi tải phân tích CV");
+    } catch (error: unknown) {
+      const apiError = error as ApiError;
+      console.error("Error loading CV analysis:", apiError);
+      setErrorMessage(apiError.message || "Có lỗi xảy ra khi tải phân tích CV");
       setAnalysisState(AnalysisState.ERROR);
       toast.error("Có lỗi xảy ra khi tải phân tích CV");
     }
@@ -59,12 +61,13 @@ const CVAnalyzePage = () => {
       const cvInfo = uploadResponse.data;
       setAnalysisState(AnalysisState.ANALYZING);
       pollAnalysisStatus(cvInfo.id);
-    } catch (error: any) {
-      console.error("Error during CV upload and analysis:", error);
-      setErrorMessage(error.message || "Có lỗi xảy ra khi xử lý CV");
+    } catch (error: unknown) {
+      const apiError = error as ApiError;
+      console.error("Error during CV upload and analysis:", apiError);
+      setErrorMessage(apiError.message || "Có lỗi xảy ra khi xử lý CV");
       setAnalysisState(AnalysisState.ERROR);
       toast.error("Có lỗi xảy ra khi xử lý CV");
-      toast.error(`Error details: ${error.stack}`);
+      toast.error(`Error details: ${apiError.stack}`);
     }
   };
 

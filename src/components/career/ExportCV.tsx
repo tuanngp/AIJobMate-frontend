@@ -5,7 +5,7 @@ import { useReactToPrint } from 'react-to-print';
 import { Document, Page, Text, View, StyleSheet, PDFDownloadLink } from '@react-pdf/renderer';
 import { Document as DocxDocument, Packer, Paragraph, TextRun, HeadingLevel } from 'docx';
 import { saveAs } from 'file-saver';
-import { CVAnalysisData } from '@/app/career/analyze/types';
+import { CVAnalysisData } from '@/services/cv/types';
 
 interface ExportCVProps {
   data: CVAnalysisData;

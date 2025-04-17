@@ -1,5 +1,5 @@
 import Cookies from 'js-cookie';
-import { isTokenExpired, getTokenExpirationTime } from './jwt';
+import { getTokenExpirationTime } from './jwt';
 import { getDeviceFingerprint } from './fingerprint';
 
 const TOKEN_CONFIG = {

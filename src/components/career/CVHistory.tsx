@@ -14,7 +14,6 @@ const CVHistory: React.FC<CVHistoryProps> = ({
   onSelectCV,
   selectedCvId,
   isCollapsed: controlledIsCollapsed,
-  onCollapsedChange
 }) => {
   const [cvList, setCvList] = useState<CvInfo[]>([]);
   const [loading, setLoading] = useState(true);
@@ -48,15 +47,6 @@ const CVHistory: React.FC<CVHistoryProps> = ({
       hour: '2-digit',
       minute: '2-digit'
     });
-  };
-
-  const toggleCollapse = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (onCollapsedChange) {
-      onCollapsedChange(!isCollapsed);
-    } else {
-      setInternalIsCollapsed(!isCollapsed);
-    }
   };
 
   if (loading) {

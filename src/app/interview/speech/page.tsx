@@ -23,6 +23,8 @@ export default function InterviewPracticePage() {
   const handleRecordingComplete = async (audioBlob: Blob) => {
     try {
       setIsAnalyzing(true)
+      const formData = new FormData()
+      formData.append('audio', audioBlob, 'recording.wav')
       toast.success('Speech analysis completed!')
     } catch (error) {
       toast.error('Failed to analyze speech. Please try again.')

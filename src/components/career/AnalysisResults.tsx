@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Tabs, Tab, Box, CircularProgress } from '@mui/material';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
-import { CVAnalysisData, PieChartData, CareerPath } from '../../app/career/analyze/types';
 import { motion } from 'framer-motion';
 import { FaUser, FaEnvelope, FaPhone, FaMapMarkerAlt, FaBriefcase, FaGraduationCap, FaCertificate } from 'react-icons/fa';
+import { CareerPath, CVAnalysisData } from '@/services/cv/types';
+import { PieChartData } from '@/app/career/analyze/types';
 
 interface AnalysisResultsProps {
   data: CVAnalysisData;
@@ -16,28 +17,10 @@ interface PieChartLabel {
   percent: number;
 }
 
-interface ChartEntry {
-  name: string;
-  value: number;
-}
-
 const COLORS = ['#6366f1', '#3b82f6', '#06b6d4', '#10b981'];
-const GRADIENT_STOPS = [
-  { offset: '0%', opacity: 0.8 },
-  { offset: '100%', opacity: 0.5 }
-];
 
 const AnalysisResults: React.FC<AnalysisResultsProps> = ({ data }) => {
   const [activeTab, setActiveTab] = useState(0);
-  const [chartData, setChartData] = useState<ChartEntry[]>([]);
-
-  useEffect(() => {
-    const formattedData = data.career_analysis.career_paths.map((path: CareerPath) => ({
-      name: path.path,
-      value: path.fit_score * 10
-    }));
-    setChartData(formattedData);
-  }, [data]);
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setActiveTab(newValue);

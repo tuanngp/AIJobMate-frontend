@@ -14,7 +14,11 @@ const AnalysisProgress: React.FC<AnalysisProgressProps> = ({ onComplete }) => {
     const interval = setInterval(() => {
       setProgress((prevProgress) => {
         const newProgress = prevProgress + 1;
-        return newProgress > 95 ? 95 : newProgress;
+        if (newProgress >= 100) {
+          clearInterval(interval);
+          onComplete();
+        }
+        return newProgress > 100 ? 100 : newProgress;
       });
     }, 300);
 
