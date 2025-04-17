@@ -1,8 +1,10 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User } from '@/services/auth/types';
 import { AuthService } from '@/services/auth/authService';
-import Cookies from 'js-cookie';
 import { EventEmitter } from 'events';
+import { tokenManager } from '@/utils/tokenManager';
+import { cacheUser, getCachedUser, clearUserCache } from '@/utils/cache';
+import { isTokenExpired } from '@/utils/jwt';
 
 const authEvents = new EventEmitter();
 const TOKEN_REFRESHED_EVENT = 'token_refreshed';
@@ -11,7 +13,7 @@ interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   loading: boolean;
-  login: (username: string, password: string) => Promise<void>;
+  login: (username: string, password: string, rememberMe?: boolean) => Promise<void>;
   register: (username: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   notifyTokenRefreshed: () => void;
@@ -31,18 +33,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const validateAndUpdateUser = async () => {
     try {
-      const accessToken = Cookies.get('access_token');
-      if (accessToken) {
-        const response = await authService.getCurrentUser();
-        if (response) {
-          console.log('User data:', response);
-          setUser(response.data);
+      setLoading(true);
+
+      // Kiểm tra session validity
+      const isValidSession = await tokenManager.validateSession();
+      if (!isValidSession) {
+        await logout();
+        return;
+      }
+
+      // Kiểm tra token expiration
+      const accessToken = tokenManager.getAccessToken();
+      if (!accessToken || isTokenExpired(accessToken)) {
+        if (await tokenManager.shouldRefreshToken()) {
+          notifyTokenRefreshed();
+          return;
         }
+        await logout();
+        return;
+      }
+
+      // Kiểm tra cache trước
+      const cachedUser = getCachedUser();
+      if (cachedUser) {
+        setUser(cachedUser);
+        return;
+      }
+
+      // Nếu không có cache, gọi API
+      const response = await authService.getCurrentUser();
+      if (response?.data) {
+        setUser(response.data);
+        cacheUser(response.data);
       }
     } catch (error) {
       console.error('Error validating user:', error);
-      // Nếu có lỗi khi lấy thông tin user, xóa token và đăng xuất
-      logout();
+      await logout();
     } finally {
       setLoading(false);
     }
@@ -66,24 +92,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     validateAndUpdateUser();
   }, []);
 
-  const login = async (username: string, password: string) => {
+  const login = async (username: string, password: string, rememberMe = false) => {
     try {
+      // Khởi tạo TokenManager nếu chưa
+      await tokenManager.initialize();
+      
       const response = await authService.login(username, password);
-      if (response) {
-        Cookies.set('access_token', response.data.access_token, {
-          secure: true,
-          sameSite: 'strict'
-        });
-
-        if (response.data.refresh_token) {
-          Cookies.set('refresh_token', response.data.refresh_token, {
-            secure: true,
-            sameSite: 'strict'
-          });
+      if (response?.data) {
+        await tokenManager.setTokens(response.data, rememberMe);
+        
+        if (response.meta?.user) {
+          setUser(response.meta.user);
+          cacheUser(response.meta.user);
+        } else {
+          await validateAndUpdateUser();
         }
-
-        // Lấy thông tin user sau khi đăng nhập thành công
-        await validateAndUpdateUser();
       }
     } catch (error) {
       console.error('Login error:', error);
@@ -103,7 +126,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     try {
-      const refreshToken = Cookies.get('refresh_token');
+      const refreshToken = tokenManager.getRefreshToken();
       if (refreshToken) {
         try {
           await authService.logout(refreshToken);
@@ -113,8 +136,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     } finally {
       setUser(null);
-      Cookies.remove('access_token');
-      Cookies.remove('refresh_token');
+      tokenManager.clearTokens();
+      clearUserCache();
     }
   };
 

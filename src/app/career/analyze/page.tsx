@@ -70,7 +70,7 @@ const CVAnalyzePage = () => {
   const pollAnalysisStatus = (cvId: number) => {
     const interval = setInterval(async () => {
       try {
-        const statusResponse = await cvService.getAnalyzeCV(cvId);
+        const statusResponse = await cvService.analyzeCV(cvId);
         await new Promise(resolve => setTimeout(resolve, 75000));
         if (statusResponse.data.status === "completed") {
           clearInterval(interval);
