@@ -26,4 +26,8 @@ export interface User {
   username: string;
   email: string;
   roles: string[];
+  full_name: string;
+  disabled: boolean;
+  created_at: string;
+  updated_at: string;
 }

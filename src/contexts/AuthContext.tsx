@@ -2,6 +2,10 @@ import { createContext, useContext, useState, useEffect, ReactNode } from 'react
 import { User } from '@/services/auth/types';
 import { AuthService } from '@/services/auth/authService';
 import Cookies from 'js-cookie';
+import { EventEmitter } from 'events';
+
+const authEvents = new EventEmitter();
+const TOKEN_REFRESHED_EVENT = 'token_refreshed';
 
 interface AuthContextType {
   user: User | null;
@@ -10,6 +14,7 @@ interface AuthContextType {
   login: (username: string, password: string) => Promise<void>;
   register: (username: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
+  notifyTokenRefreshed: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -17,23 +22,54 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const authService = AuthService();
+  
+  const notifyTokenRefreshed = () => {
+    authEvents.emit(TOKEN_REFRESHED_EVENT);
+  };
+  
+  const authService = AuthService(notifyTokenRefreshed);
 
-  useEffect(() => {
-    // Kiểm tra token trong localStorage khi component mount
-    const accessToken = Cookies.get('access_token');
-    if (accessToken) {
-      setLoading(false);
-    } else {
+  const validateAndUpdateUser = async () => {
+    try {
+      const accessToken = Cookies.get('access_token');
+      if (accessToken) {
+        const response = await authService.getCurrentUser();
+        if (response) {
+          console.log('User data:', response);
+          setUser(response.data);
+        }
+      }
+    } catch (error) {
+      console.error('Error validating user:', error);
+      // Nếu có lỗi khi lấy thông tin user, xóa token và đăng xuất
+      logout();
+    } finally {
       setLoading(false);
     }
+  };
+
+  // Lắng nghe sự kiện token được refresh
+  useEffect(() => {
+    const handleTokenRefreshed = () => {
+      validateAndUpdateUser();
+    };
+
+    authEvents.on(TOKEN_REFRESHED_EVENT, handleTokenRefreshed);
+
+    return () => {
+      authEvents.off(TOKEN_REFRESHED_EVENT, handleTokenRefreshed);
+    };
+  }, []);
+
+  // Kiểm tra và lấy thông tin user khi component mount
+  useEffect(() => {
+    validateAndUpdateUser();
   }, []);
 
   const login = async (username: string, password: string) => {
     try {
       const response = await authService.login(username, password);
       if (response) {
-        setUser(response.meta?.user);
         Cookies.set('access_token', response.data.access_token, {
           secure: true,
           sameSite: 'strict'
@@ -45,6 +81,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             sameSite: 'strict'
           });
         }
+
+        // Lấy thông tin user sau khi đăng nhập thành công
+        await validateAndUpdateUser();
       }
     } catch (error) {
       console.error('Login error:', error);
@@ -64,13 +103,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     try {
-      await authService.logout(Cookies.get('refresh_token') || '');
+      const refreshToken = Cookies.get('refresh_token');
+      if (refreshToken) {
+        try {
+          await authService.logout(refreshToken);
+        } catch (error) {
+          console.error('Logout error:', error);
+        }
+      }
+    } finally {
       setUser(null);
       Cookies.remove('access_token');
       Cookies.remove('refresh_token');
-    } catch (error) {
-      console.error('Logout error:', error);
-      throw error;
     }
   };
 
@@ -81,6 +125,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     login,
     register,
     logout,
+    notifyTokenRefreshed,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

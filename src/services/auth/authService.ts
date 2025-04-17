@@ -1,9 +1,9 @@
 import { ApiResponse, useApi } from "@/hooks/useApi";
-import { AUTH } from "../api";
-import { LoginResponse, RegisterResponse } from "./types";
+import { AUTH, USER } from "../api";
+import { LoginResponse, RegisterResponse, User } from "./types";
 
-export const AuthService = () => {
-  const api = useApi();
+export const AuthService = (onTokenRefreshed?: () => void) => {
+  const api = useApi({ onTokenRefreshed });
   return {
     async login(
       username: string,
@@ -26,17 +26,22 @@ export const AuthService = () => {
         username,
         password,
       });
-      return response.data;
+      return response;
     },
 
     async logout(refresh_token: string): Promise<ApiResponse<string>> {
       const response = await api.post(AUTH.LOGOUT, { refresh_token });
-      return response.data;
+      return response;
     },
 
     async refreshToken(): Promise<ApiResponse<string>> {
       const response = await api.post(AUTH.REFRESH_TOKEN);
-      return response.data;
+      return response;
+    },
+
+    async getCurrentUser(): Promise<ApiResponse<User>> {
+      const response = await api.get(USER.GET_CURRENT);
+      return response;
     },
   };
 };

@@ -35,6 +35,7 @@ interface ApiServiceOptions {
   timeout?: number;
   tokenManager?: TokenManager;
   onAuthError?: () => void;
+  onTokenRefreshed?: () => void;
 }
 
 // Token Manager - được đơn giản hóa
@@ -244,6 +245,8 @@ export const useApi = (options?: ApiServiceOptions) => {
             originalRequest.headers.Authorization = `Bearer ${newToken}`;
             onRefreshSuccess(newToken);
             setIsRefreshing(false);
+            // Thông báo token đã được refresh
+            options?.onTokenRefreshed?.();
             return apiInstance(originalRequest);
           } catch (refreshError) {
             setIsRefreshing(false);
