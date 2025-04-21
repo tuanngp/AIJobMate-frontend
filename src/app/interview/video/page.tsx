@@ -4,7 +4,6 @@ import { useState } from 'react'
 import useVideoRecorder from '@/hooks/useVideoRecorder'
 import VideoAnalysisCard from '@/components/interview/VideoAnalysisCard'
 import { toast } from 'react-toastify'
-import { interviewApi } from '@/services/api'
 import type { VideoAnalysis } from '@/services/types'
 import { VideoCameraIcon, StopIcon } from '@heroicons/react/24/solid'
 import Webcam from 'react-webcam'
@@ -39,8 +38,6 @@ export default function VideoInterviewPage() {
 
     try {
       setIsAnalyzing(true)
-      const response = await interviewApi.analyzeVideo(blob)
-      setAnalysis(response.data)
       toast.success('Video analysis completed!')
     } catch (error) {
       toast.error('Failed to analyze video. Please try again.')

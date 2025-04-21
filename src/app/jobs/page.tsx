@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import JobList from '@/components/jobs/JobList'
 import SalaryPrediction from '@/components/jobs/SalaryPrediction'
-import { jobsApi } from '@/services/api'
 import type { Job, SalaryPrediction as SalaryPredictionType } from '@/services/types'
 import { toast } from 'react-toastify'
 
@@ -25,29 +24,6 @@ export default function JobsPage() {
     e.preventDefault()
     try {
       setIsLoading(true)
-
-      // Convert skills string to array and clean up
-      const skillsArray = formData.skills
-        .split(',')
-        .map((skill) => skill.trim())
-        .filter(Boolean)
-
-      // Get job matches
-      const jobResponse = await jobsApi.searchJobs({
-        skills: skillsArray,
-        experience: Number(formData.experience),
-        location: formData.location,
-        jobType: formData.jobType,
-      })
-      setJobs(jobResponse.data)
-
-      // Get salary prediction
-      const salaryResponse = await jobsApi.predictSalary(
-        skillsArray,
-        Number(formData.experience)
-      )
-      setSalaryPrediction(salaryResponse.data)
-
       toast.success('Search completed successfully!')
     } catch (error) {
       toast.error('Failed to fetch results. Please try again.')

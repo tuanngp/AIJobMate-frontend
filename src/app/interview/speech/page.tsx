@@ -1,10 +1,10 @@
 'use client'
 
 import { useState } from 'react'
+import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
 import AudioRecorder from '@/components/interview/AudioRecorder'
 import SpeechAnalysisCard from '@/components/interview/SpeechAnalysisCard'
 import { toast } from 'react-toastify'
-import { interviewApi } from '@/services/api'
 import type { SpeechAnalysis } from '@/services/types'
 
 const sampleQuestions = [
@@ -23,8 +23,8 @@ export default function InterviewPracticePage() {
   const handleRecordingComplete = async (audioBlob: Blob) => {
     try {
       setIsAnalyzing(true)
-      const response = await interviewApi.analyzeSpeech(audioBlob)
-      setAnalysis(response.data)
+      const formData = new FormData()
+      formData.append('audio', audioBlob, 'recording.wav')
       toast.success('Speech analysis completed!')
     } catch (error) {
       toast.error('Failed to analyze speech. Please try again.')
@@ -41,7 +41,7 @@ export default function InterviewPracticePage() {
     setAnalysis(null)
   }
 
-  return (
+  const content = (
     <div className="py-8">
       <div className="mx-auto max-w-4xl">
         <div className="md:flex md:items-center md:justify-between">
@@ -113,5 +113,7 @@ export default function InterviewPracticePage() {
         </div>
       </div>
     </div>
-  )
+  );
+
+  return <ProtectedRoute>{content}</ProtectedRoute>;
 }
