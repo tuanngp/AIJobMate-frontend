@@ -32,26 +32,15 @@ export const InterviewService = () => {
 
         async speechToText(interviewId: number, audioFile: File): Promise<ApiResponse<{transcript: string}>> {
             const formData = new FormData();
+            formData.append('file', audioFile);
             
-            // Make sure we're using the correct field name expected by the backend
-            // Changed from 'file' to 'audio' as this is more commonly used for audio files
-            formData.append('audio', audioFile);
-            
-            // Add interview_id only if it's a valid ID (greater than 0)
             if (interviewId > 0) {
                 formData.append('interview_id', interviewId.toString());
             }
-            
-            // Add additional information that might be needed by the API
-            formData.append('content_type', audioFile.type);
-            formData.append('file_name', audioFile.name);
-            
-            // Make sure not to set Content-Type manually as the browser will set the correct
-            // multipart boundary when sending FormData
+
             const response = await api.post(INTERVIEW.SPEECH_TO_TEXT, formData, {
                 headers: {
-                    // Let the browser set the Content-Type with the correct boundary
-                    // 'Content-Type': 'multipart/form-data' - Don't set this manually
+                    'Content-Type': 'multipart/form-data'
                 },
             });
             return response;
