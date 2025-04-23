@@ -11,14 +11,17 @@ export function LoginForm() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
+  const [debugInfo, setDebugInfo] = useState<string | null>(null);
 
   const router = useRouter();
-  const { login } = useAuth();
+  const { login, isAuthenticated } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setLoading(true);
+    setDebugInfo(null);
 
     // Validation cơ bản
     if (!username || !password) {
@@ -28,10 +31,39 @@ export function LoginForm() {
     }
 
     try {
-      await login(username, password);
-      router.push('/'); // Chuyển về trang chủ sau khi đăng nhập thành công
-    } catch (err) {
-      setError('Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.' + err);
+      console.log('Submitting login form...');
+      await login(username, password, rememberMe);
+      console.log('Login successful, redirecting...');
+      
+      // Short delay before redirect to ensure cookies are set
+      setTimeout(() => {
+        router.push('/');
+      }, 500);
+    } catch (err: any) {
+      console.error('Login error:', err);
+      
+      // Parse and display readable error message
+      let errorMessage = 'Đăng nhập thất bại.';
+      
+      if (err?.message) {
+        errorMessage += ` ${err.message}`;
+      }
+      
+      if (err?.errors) {
+        const errorDetails = typeof err.errors === 'object' 
+          ? Object.values(err.errors).join('. ') 
+          : err.errors;
+        errorMessage += ` ${errorDetails}`;
+      }
+      
+      setError(errorMessage);
+      
+      // Display debug info
+      setDebugInfo(JSON.stringify({
+        error: err,
+        time: new Date().toISOString(),
+        browserInfo: navigator.userAgent
+      }, null, 2));
     } finally {
       setLoading(false);
     }
@@ -111,6 +143,28 @@ export function LoginForm() {
             </div>
           </div>
 
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <input
+                id="remember-me"
+                name="remember-me"
+                type="checkbox"
+                className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+              />
+              <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">
+                Ghi nhớ đăng nhập
+              </label>
+            </div>
+
+            <div className="text-sm">
+              <a href="#" className="font-medium text-indigo-600 hover:text-indigo-500">
+                Quên mật khẩu?
+              </a>
+            </div>
+          </div>
+
           {error && (
             <div className="text-red-500 text-sm text-center">{error}</div>
           )}
@@ -135,10 +189,20 @@ export function LoginForm() {
             </button>
           </div>
         </form>
+        
         <SocialLogin
           onGoogleLogin={handleGoogleLogin}
           onGithubLogin={handleGithubLogin}
         />
+        
+        {debugInfo && (
+          <div className="mt-4 p-2 bg-gray-100 rounded text-xs">
+            <details>
+              <summary className="cursor-pointer text-gray-700">Debug Information</summary>
+              <pre className="mt-2 overflow-auto max-h-40">{debugInfo}</pre>
+            </details>
+          </div>
+        )}
       </div>
     </div>
   );

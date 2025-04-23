@@ -23,3 +23,13 @@ export const CV = {
     ANALYZE: (id:number) => `/cv/${id}/analyze`,
 }
 
+export const INTERVIEW = {
+    GENERATE: `/interviews/generate`,
+    GET_LIST: `/interviews`,
+    GET: (id:number) => `/interviews/${id}`,
+    DELETE: (id:number) => `/interviews/${id}`,
+    ANALYZE_ANSWER: (interviewId:number, questionId:number) => `/interviews/${interviewId}/questions/${questionId}/analyze`,
+    SPEECH_TO_TEXT: `/interviews/speech-to-text`,
+}
+
+

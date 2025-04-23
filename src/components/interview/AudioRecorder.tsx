@@ -1,13 +1,15 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import useAudioRecorder from '@/hooks/useAudioRecorder'
 import {
   MicrophoneIcon,
   PauseIcon,
   PlayIcon,
   StopIcon,
+  ExclamationTriangleIcon,
 } from '@heroicons/react/24/solid'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 
 interface AudioRecorderProps {
   onRecordingComplete: (blob: Blob) => void
@@ -24,6 +26,7 @@ export default function AudioRecorder({
     isPaused,
     duration,
     audioUrl,
+    error,
     startRecording,
     stopRecording,
     pauseRecording,
@@ -31,6 +34,13 @@ export default function AudioRecorder({
     getAudioBlob,
     formatDuration,
   } = useAudioRecorder()
+
+  // Reset isPlaying when audioUrl changes
+  useEffect(() => {
+    if (!audioUrl) {
+      setIsPlaying(false)
+    }
+  }, [audioUrl])
 
   const handleSubmit = () => {
     const blob = getAudioBlob()
@@ -54,6 +64,26 @@ export default function AudioRecorder({
 
   return (
     <div className="space-y-4">
+      {/* Error Message */}
+      {error && (
+        <Alert variant="destructive" className="bg-red-50 text-red-800 border-red-200">
+          <ExclamationTriangleIcon className="h-5 w-5 text-red-600" />
+          <AlertTitle className="text-red-800">Microphone Access Error</AlertTitle>
+          <AlertDescription className="text-red-700">
+            {error}
+            <div className="mt-2 text-sm">
+              <strong>How to fix:</strong>
+              <ul className="list-disc pl-5 mt-1 space-y-1">
+                <li>Check your browser permissions settings</li>
+                <li>Make sure no other application is using your microphone</li>
+                <li>Try refreshing the page</li>
+                <li>For Chrome: Click the lock/info icon in the address bar and ensure microphone access is allowed</li>
+              </ul>
+            </div>
+          </AlertDescription>
+        </Alert>
+      )}
+
       {/* Recording Controls */}
       <div className="flex items-center justify-center space-x-4">
         {!isRecording && !audioUrl && (

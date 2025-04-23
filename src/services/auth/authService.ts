@@ -21,18 +21,28 @@ export const AuthService = (onTokenRefreshed?: () => void) => {
         const params = new URLSearchParams();
         params.append("username", username);
         params.append("password", password);
+        
         const response = await api.post(AUTH.LOGIN, params.toString(), {
           headers: { "Content-Type": "application/x-www-form-urlencoded" },
         });
-
+        
         if (response?.data) {
           await tokenManager.setTokens(response.data, rememberMe);
         }
         
         return response;
-      } catch (error) {
+      } catch (error: any) {
         tokenManager.clearTokens();
-        throw error;
+        
+        // Format error for better handling in UI
+        const formattedError = {
+          code: error.code || 401,
+          message: error.message || 'Authentication failed',
+          data: null,
+          errors: error.errors || { auth: 'Invalid username or password' }
+        };
+        
+        throw formattedError;
       }
     },
 
@@ -40,17 +50,23 @@ export const AuthService = (onTokenRefreshed?: () => void) => {
       username: string,
       password: string
     ): Promise<ApiResponse<RegisterResponse>> {
-      const response = await api.post(AUTH.REGISTER, {
-        username,
-        password,
-      });
-      return response;
+      try {
+        const response = await api.post(AUTH.REGISTER, {
+          username,
+          password,
+        });
+        return response;
+      } catch (error) {
+        throw error;
+      }
     },
 
     async logout(refresh_token: string): Promise<ApiResponse<string>> {
       try {
         const response = await api.post(AUTH.LOGOUT, { refresh_token });
         return response;
+      } catch (error) {
+        throw error;
       } finally {
         // Luôn xóa tokens khi logout, ngay cả khi API fail
         tokenManager.clearTokens();
@@ -59,7 +75,13 @@ export const AuthService = (onTokenRefreshed?: () => void) => {
 
     async refreshToken(): Promise<ApiResponse<LoginResponse>> {
       try {
-        const response = await api.post(AUTH.REFRESH_TOKEN);
+        const refreshToken = tokenManager.getRefreshToken();
+        if (!refreshToken) {
+          throw new Error('No refresh token available');
+        }
+        
+        const response = await api.post(AUTH.REFRESH_TOKEN, { refresh_token: refreshToken });
+        
         if (response?.data) {
           await tokenManager.setTokens(response.data);
         }

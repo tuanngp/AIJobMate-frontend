@@ -5,6 +5,7 @@ interface AudioRecorderState {
   isPaused: boolean
   duration: number
   audioUrl: string | null
+  error: string | null
 }
 
 export default function useAudioRecorder() {
@@ -13,6 +14,7 @@ export default function useAudioRecorder() {
     isPaused: false,
     duration: 0,
     audioUrl: null,
+    error: null
   })
 
   const mediaRecorder = useRef<MediaRecorder | null>(null)
@@ -21,7 +23,15 @@ export default function useAudioRecorder() {
 
   const startRecording = useCallback(async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      // Reset any previous errors
+      setState(prev => ({ ...prev, error: null }))
+      
+      // Request permission with constraints
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        audio: true,
+        video: false
+      })
+      
       mediaRecorder.current = new MediaRecorder(stream)
       audioChunks.current = []
 
@@ -46,8 +56,22 @@ export default function useAudioRecorder() {
 
       setState((prev) => ({ ...prev, isRecording: true, isPaused: false }))
     } catch (error) {
+      let errorMessage = 'Could not access microphone'
+      
+      // Provide more specific error messages based on the error type
+      if (error instanceof DOMException) {
+        if (error.name === 'NotAllowedError') {
+          errorMessage = 'Microphone access denied. Please allow microphone access in your browser settings.'
+        } else if (error.name === 'NotFoundError') {
+          errorMessage = 'No microphone detected. Please connect a microphone and try again.'
+        } else if (error.name === 'NotReadableError' || error.name === 'AbortError') {
+          errorMessage = 'Your microphone is busy or unavailable. Please close other applications that might be using it.'
+        }
+      }
+      
       console.error('Error accessing microphone:', error)
-      throw new Error('Could not access microphone')
+      setState(prev => ({ ...prev, error: errorMessage }))
+      throw new Error(errorMessage)
     }
   }, [])
 
@@ -101,6 +125,7 @@ export default function useAudioRecorder() {
       isPaused: false,
       duration: 0,
       audioUrl: null,
+      error: null
     })
   }, [state.audioUrl])
 

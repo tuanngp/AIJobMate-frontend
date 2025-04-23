@@ -35,6 +35,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       setLoading(true);
 
+      // Check tokens exist
+      const accessToken = tokenManager.getAccessToken();
+      if (!accessToken) {
+        await logout();
+        return;
+      }
+
       // Kiểm tra session validity
       const isValidSession = await tokenManager.validateSession();
       if (!isValidSession) {
@@ -43,14 +50,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       // Kiểm tra token expiration
-      const accessToken = tokenManager.getAccessToken();
-      if (!accessToken || isTokenExpired(accessToken)) {
+      if (isTokenExpired(accessToken)) {
         if (await tokenManager.shouldRefreshToken()) {
-          notifyTokenRefreshed();
+          try {
+            await authService.refreshToken();
+            notifyTokenRefreshed();
+          } catch (refreshError) {
+            await logout();
+            return;
+          }
+        } else {
+          await logout();
           return;
         }
-        await logout();
-        return;
       }
 
       // Kiểm tra cache trước
@@ -61,13 +73,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       // Nếu không có cache, gọi API
-      const response = await authService.getCurrentUser();
-      if (response?.data) {
-        setUser(response.data);
-        cacheUser(response.data);
+      try {
+        const response = await authService.getCurrentUser();
+        if (response?.data) {
+          setUser(response.data);
+          cacheUser(response.data);
+        } else {
+          await logout();
+        }
+      } catch (apiError) {
+        await logout();
       }
     } catch (error) {
-      console.error('Error validating user:', error);
       await logout();
     } finally {
       setLoading(false);
@@ -97,7 +114,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Khởi tạo TokenManager nếu chưa
       await tokenManager.initialize();
       
-      const response = await authService.login(username, password);
+      const response = await authService.login(username, password, rememberMe);
+      
       if (response?.data) {
         await tokenManager.setTokens(response.data, rememberMe);
         
@@ -107,9 +125,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } else {
           await validateAndUpdateUser();
         }
+      } else {
+        throw new Error('Login failed - no response data');
       }
     } catch (error) {
-      console.error('Login error:', error);
       throw error;
     }
   };
@@ -119,7 +138,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await authService.register(username, password);
       await login(username, password);
     } catch (error) {
-      console.error('Register error:', error);
       throw error;
     }
   };
@@ -131,7 +149,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         try {
           await authService.logout(refreshToken);
         } catch (error) {
-          console.error('Logout error:', error);
+          // Silent error on logout API call
         }
       }
     } finally {
