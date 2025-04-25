@@ -42,6 +42,7 @@ export const InterviewService = () => {
                 headers: {
                     'Content-Type': 'multipart/form-data'
                 },
+                timeout: 5*60*1000,
             });
             return response;
         }

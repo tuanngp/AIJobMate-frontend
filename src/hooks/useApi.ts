@@ -116,7 +116,7 @@ export const useApi = (options?: ApiServiceOptions) => {
     options?.baseURL ||
     process.env.NEXT_PUBLIC_API_BASE_URL ||
     "http://localhost:8000";
-  const timeout = options?.timeout || 10000;
+  const timeout = options?.timeout || 5*60*1000;
   const tokenManager = options?.tokenManager || createCookieTokenManager();
   const onAuthError =
     options?.onAuthError ||
